@@ -1,5 +1,5 @@
 import { Template } from '@glimmer/interfaces';
-import { templateFactory, TemplateFactory, TemplateOptions } from '@glimmer/opcode-compiler';
+import { CompileOptions, templateFactory, TemplateFactory } from '@glimmer/opcode-compiler';
 import { SerializedTemplateWithLazyBlock } from '@glimmer/wire-format';
 import { getOwner } from 'ember-utils';
 import { OwnedTemplateMeta, StaticTemplateMeta } from 'ember-views';
@@ -12,7 +12,7 @@ export default function template(json: StaticTemplate): Factory {
 }
 
 export interface Injections {
-  options: TemplateOptions<OwnedTemplateMeta>;
+  options: CompileOptions<OwnedTemplateMeta>;
   [key: string]: any;
 }
 
