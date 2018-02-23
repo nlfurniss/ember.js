@@ -1,4 +1,4 @@
-import { CONSTANT_TAG, DirtyableTag } from '@glimmer/reference';
+import { CONSTANT_TAG, UpdatableTag, CURRENT_TAG } from '@glimmer/reference';
 import { meta as metaFor } from './meta';
 import { isProxy } from './is_proxy';
 import run from './run_loop';
@@ -10,7 +10,7 @@ export function setHasViews(fn) {
 }
 
 function makeTag() {
-  return DirtyableTag.create();
+  return UpdatableTag.create();
 }
 
 export function tagForProperty(object, propertyKey, _meta) {
@@ -41,10 +41,10 @@ export function markObjectAsDirty(obj, propertyKey, meta) {
   let objectTag = meta.readableTag();
 
   if (objectTag !== undefined) {
-    if (isProxy(obj)) {
-      objectTag.inner.first.inner.dirty();
+    if (meta.isProxy()) {
+      objectTag.inner.first.inner.update(CURRENT_TAG);
     } else {
-      objectTag.inner.dirty();
+      objectTag.inner.update(CURRENT_TAG);
     }
   }
 
@@ -52,7 +52,7 @@ export function markObjectAsDirty(obj, propertyKey, meta) {
   let propertyTag = tags !== undefined ? tags[propertyKey] : undefined;
 
   if (propertyTag !== undefined) {
-    propertyTag.inner.dirty();
+    propertyTag.inner.update(CURRENT_TAG);
   }
 
   if (objectTag !== undefined || propertyTag !== undefined) {
