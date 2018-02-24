@@ -7,6 +7,8 @@ import { HAS_NATIVE_PROXY, symbol } from 'ember-utils';
 import { DESCRIPTOR_TRAP, EMBER_METAL_ES5_GETTERS, MANDATORY_GETTER } from 'ember/features';
 import { isPath } from './path_cache';
 import { isDescriptor, isDescriptorTrap, DESCRIPTOR, descriptorFor } from './meta';
+import { getCurrentTracker } from './tracked';
+import { tagForProperty } from './tags';
 
 const ALLOWABLE_TYPES = {
   object: true,
@@ -86,6 +88,9 @@ export function get(obj, keyName) {
   let value;
 
   if (isObjectLike) {
+    // let tracker = getCurrentTracker();
+    // if (tracker) tracker.add(tagForProperty(obj, keyName));
+
     if (EMBER_METAL_ES5_GETTERS) {
       descriptor = descriptorFor(obj, keyName);
     }
