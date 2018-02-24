@@ -1,9 +1,9 @@
-import { combine, CURRENT_TAG } from '@glimmer/reference';
+import { combine } from '@glimmer/reference';
 import { meta as metaFor } from './meta';
 import { markObjectAsDirty, tagForProperty } from './tags';
 function mark(obj, key) {
     let meta = metaFor(obj);
-    markObjectAsDirty(meta, key);
+    markObjectAsDirty(obj, key, meta);
 }
 /**
   An object that that tracks @tracked properties that were consumed.
@@ -111,6 +111,9 @@ let CURRENT_TRACKER = null;
 export function getCurrentTracker() {
     return CURRENT_TRACKER;
 }
+export function setCurrentTracker(tracker = new Tracker()) {
+    return CURRENT_TRACKER = tracker;
+}
 function descriptorForAccessor(key, descriptor) {
     let get = descriptor.get;
     let set = descriptor.set;
@@ -170,7 +173,6 @@ function descriptorForDataProperty(key, descriptor) {
         set(newValue) {
             // Mark the UpdatableTag for this property with the current tag.
             mark(this, key);
-            tagForProperty(this, key).inner.update(CURRENT_TAG);
             this[shadowKey] = newValue;
             propertyDidChange();
         }

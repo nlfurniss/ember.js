@@ -12,7 +12,9 @@ export function setHasViews(fn) {
 }
 
 function makeTag() {
-  return UpdatableTag.create(CURRENT_TAG);
+  let tag = UpdatableTag.create(CONSTANT_TAG);
+  tag.inner.update(CURRENT_TAG);
+  return tag;
 }
 
 export function tagForProperty(object, propertyKey, _meta) {
@@ -49,15 +51,17 @@ export function markObjectAsDirty(obj, propertyKey, meta) {
   }
 
   if (objectTag !== undefined) {
-    if (meta.isProxy()) {
-      objectTag.inner.first.inner.update(CURRENT_TAG);
+    if (isProxy(obj)) {
+      objectTag.inner.first.inner.dirty();
     } else {
-      objectTag.inner.update(CURRENT_TAG);
+      EPOCH.inner.dirty();
+      objectTag.inner.update(EPOCH);
     }
   }
 
   if (propertyTag !== undefined) {
-    propertyTag.inner.update(CURRENT_TAG);
+    EPOCH.inner.dirty();
+    propertyTag.inner.update(EPOCH);
   }
 
   if (objectTag !== undefined || propertyTag !== undefined) {

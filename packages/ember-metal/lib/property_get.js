@@ -88,8 +88,8 @@ export function get(obj, keyName) {
   let value;
 
   if (isObjectLike) {
-    // let tracker = getCurrentTracker();
-    // if (tracker) tracker.add(tagForProperty(obj, keyName));
+    let tracker = getCurrentTracker();
+    if (tracker) tracker.add(tagForProperty(obj, keyName));
 
     if (EMBER_METAL_ES5_GETTERS) {
       descriptor = descriptorFor(obj, keyName);

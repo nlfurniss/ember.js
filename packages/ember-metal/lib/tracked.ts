@@ -15,7 +15,7 @@ interface Dict<T> {
 
 function mark(obj: unknown, key: string | symbol) {
   let meta = metaFor(obj);
-  markObjectAsDirty(meta, key);
+  markObjectAsDirty(obj, key, meta);
 }
 
 /**
@@ -128,7 +128,7 @@ export function getCurrentTracker(): Option<Tracker> {
 }
 
 export function setCurrentTracker(tracker: Tracker = new Tracker()): Tracker {
-  return CURRENT_TRACKER = new Tracker();
+  return CURRENT_TRACKER = tracker;
 }
 
 function descriptorForAccessor(key: string | symbol, descriptor: PropertyDescriptor): PropertyDescriptor {

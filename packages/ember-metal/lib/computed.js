@@ -334,14 +334,14 @@ class ComputedProperty extends Descriptor {
       return cache.get(keyName);
     }
 
-    // let parent = getCurrentTracker();
-    // let tracker = setCurrentTracker();
+    let parent = getCurrentTracker();
+    let tracker = setCurrentTracker();
 
     let ret = this._getter.call(obj, keyName);
 
-    // setCurrentTracker(parent);
-    // let tag = tracker.combine();
-    // if (parent) parent.add(tag);
+    setCurrentTracker(parent);
+    let tag = tracker.combine();
+    if (parent) parent.add(tag);
 
     cache.set(keyName, ret);
 
