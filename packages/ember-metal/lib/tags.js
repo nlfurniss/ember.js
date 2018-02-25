@@ -1,21 +1,19 @@
-import { CONSTANT_TAG, CURRENT_TAG, UpdatableTag, DirtyableTag } from '@glimmer/reference';
+import { CONSTANT_TAG, UpdatableTag, DirtyableTag, combine } from '@glimmer/reference';
 import { meta as metaFor } from './meta';
 import { isProxy } from './is_proxy';
 import run from './run_loop';
 
 let hasViews = () => false;
 
-export const EPOCH = DirtyableTag.create();
-
 export function setHasViews(fn) {
   hasViews = fn;
 }
 
 function makeTag() {
-  let tag = UpdatableTag.create(CONSTANT_TAG);
-  tag.inner.update(CURRENT_TAG);
-  return tag;
+  return DirtyableTag.create();
 }
+
+export const TRACKED_GETTERS = new WeakMap();
 
 export function tagForProperty(object, propertyKey, _meta) {
   if (typeof object !== 'object' || object === null) { return CONSTANT_TAG; }
@@ -29,7 +27,8 @@ export function tagForProperty(object, propertyKey, _meta) {
   let tag = tags[propertyKey];
   if (tag) { return tag; }
 
-  return tags[propertyKey] = makeTag();
+  let pair = combine([DirtyableTag.create(), UpdatableTag.create(CONSTANT_TAG)]);
+  return tags[propertyKey] = pair;
 }
 
 export function tagFor(object, _meta) {
@@ -41,27 +40,29 @@ export function tagFor(object, _meta) {
   }
 }
 
+export function dirty(tag) {
+  tag.inner.first.inner.dirty();
+}
+
+export function update(outer, inner) {
+  outer.inner.second.inner.update(inner);
+}
+
 export function markObjectAsDirty(obj, propertyKey, meta) {
   let objectTag = meta.readableTag();
   let tags = meta.readableTags();
   let propertyTag = tags !== undefined ? tags[propertyKey] : undefined;
 
-  if (propertyTag !== undefined || objectTag !== undefined) {
-    EPOCH.inner.dirty();
-  }
-
   if (objectTag !== undefined) {
     if (isProxy(obj)) {
       objectTag.inner.first.inner.dirty();
     } else {
-      EPOCH.inner.dirty();
-      objectTag.inner.update(EPOCH);
+      objectTag.inner.dirty();
     }
   }
 
   if (propertyTag !== undefined) {
-    EPOCH.inner.dirty();
-    propertyTag.inner.update(EPOCH);
+    dirty(propertyTag);
   }
 
   if (objectTag !== undefined || propertyTag !== undefined) {

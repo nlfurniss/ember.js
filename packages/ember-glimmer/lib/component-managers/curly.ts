@@ -351,6 +351,7 @@ export default class CurlyComponentManager extends AbstractManager<ComponentStat
 
     bucket.finalizer = _instrumentStart('render.component', rerenderInstrumentDetails, component);
 
+    debugger;
     if (args && !args.tag.validate(argsRevision)) {
       let props = processComponentArgs(args!);
 

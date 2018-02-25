@@ -4,18 +4,13 @@ import {
   MANDATORY_SETTER
 } from 'ember/features';
 import { meta as metaFor } from './meta';
-import { markObjectAsDirty, tagFor, tagForProperty } from './tags';
+import { TRACKED_GETTERS, markObjectAsDirty, tagFor, tagForProperty, dirty, update } from './tags';
 
 type Option<T> = T | null;
 type unknown = null | undefined | void | {};
 
 interface Dict<T> {
   [key: string]: T;
-}
-
-function mark(obj: unknown, key: string | symbol) {
-  let meta = metaFor(obj);
-  markObjectAsDirty(obj, key, meta);
 }
 
 /**
@@ -25,15 +20,27 @@ function mark(obj: unknown, key: string | symbol) {
  */
 class Tracker {
   private tags = new Set<Tag>();
+  private last: Option<Tag> = null;
 
   add(tag: Tag) {
     this.tags.add(tag);
+    this.last = tag;
+  }
+
+  get size() {
+    return this.tags.size;
   }
 
   combine(): Tag {
-    let tags: Tag[] = [];
-    this.tags.forEach(tag => tags.push(tag));
-    return combine(tags);
+    if (this.tags.size === 0) {
+      return CONSTANT_TAG;
+    } else if (this.tags.size === 1) {
+      return this.last;
+    } else {
+      let tags: Tag[] = [];
+      this.tags.forEach(tag => tags.push(tag));
+      return combine(tags);
+    }
   }
 }
 
@@ -152,14 +159,14 @@ function descriptorForAccessor(key: string | symbol, descriptor: PropertyDescrip
 
     // Update the UpdatableTag for this property with the tag for all of the
     // consumed dependencies.
-    mark(this, key);
+    update(tagForProperty(this, key), tag);
 
     return ret;
   }
 
   function setter(this: unknown) {
     // Mark the UpdatableTag for this property with the current tag.
-    mark(this, key);
+    dirty(tagForProperty(this, key));
     set.apply(this, arguments);
   }
 
@@ -203,8 +210,8 @@ function descriptorForDataProperty(key, descriptor) {
     },
 
     set(newValue) {
-      // Mark the UpdatableTag for this property with the current tag.
-      mark(this, key);
+      tagFor(this).inner.dirty();
+      dirty(tagForProperty(this, key));
       this[shadowKey] = newValue;
       propertyDidChange();
     }

@@ -15,6 +15,7 @@ import {
   removeDependentKeys
 } from './dependent_keys';
 import { getCurrentTracker, setCurrentTracker } from './tracked';
+import { tagForProperty, update } from './tags';
 
 /**
 @module @ember/object
@@ -150,6 +151,7 @@ class ComputedProperty extends Descriptor {
     this._suspended = undefined;
     this._meta = undefined;
     this._volatile = false;
+    this._auto = false;
 
     this._dependentKeys = opts && opts.dependentKeys;
     this._readOnly = opts && hasGetterOnly && opts.readOnly === true;
@@ -211,6 +213,11 @@ class ComputedProperty extends Descriptor {
   readOnly() {
     this._readOnly = true;
     assert('Computed properties that define a setter using the new syntax cannot be read-only', !(this._readOnly && this._setter && this._setter !== this._getter));
+    return this;
+  }
+
+  auto() {
+    this._auto = true;
     return this;
   }
 
@@ -329,9 +336,19 @@ class ComputedProperty extends Descriptor {
     }
 
     let cache = getCacheFor(obj);
+    let propertyTag = tagForProperty(obj, keyName);
 
     if (cache.has(keyName)) {
-      return cache.get(keyName);
+      // special-case for computed with no dependent keys used to
+      // trigger cacheable behavior.
+      if (!this._auto && (!this._dependentKeys || this._dependentKeys.length === 0)) {
+        return cache.get(keyName);
+      }
+
+      let lastRevision = getLastRevisionFor(obj, keyName);
+      if (propertyTag.validate(lastRevision)) {
+        return cache.get(keyName);
+      }
     }
 
     let parent = getCurrentTracker();
@@ -342,6 +359,9 @@ class ComputedProperty extends Descriptor {
     setCurrentTracker(parent);
     let tag = tracker.combine();
     if (parent) parent.add(tag);
+
+    update(propertyTag, tag);
+    setLastRevisionFor(obj, keyName, propertyTag.value());
 
     cache.set(keyName, ret);
 
@@ -416,6 +436,8 @@ class ComputedProperty extends Descriptor {
     cache.set(keyName, ret);
 
     notifyPropertyChange(obj, keyName, meta);
+    let propertyTag = tagForProperty(obj, keyName);    
+    setLastRevisionFor(obj, keyName, propertyTag.value());
 
     return ret;
   }
@@ -532,6 +554,7 @@ export default function computed(...args) {
 }
 
 const COMPUTED_PROPERTY_CACHED_VALUES = new WeakMap();
+const COMPUTED_PROPERTY_LAST_REVISION = new WeakMap();
 
 /**
   Returns the cached value for a property, if one exists.
@@ -552,7 +575,9 @@ export function getCacheFor(obj) {
   let cache = COMPUTED_PROPERTY_CACHED_VALUES.get(obj);
   if (cache === undefined) {
     cache = new Map();
+    let revisions = new Map();
     COMPUTED_PROPERTY_CACHED_VALUES.set(obj, cache);
+    COMPUTED_PROPERTY_LAST_REVISION.set(obj, revisions);
   }
   return cache;
 }
@@ -560,6 +585,20 @@ export function getCacheFor(obj) {
 export function getCachedValueFor(obj, key) {
   let cache = COMPUTED_PROPERTY_CACHED_VALUES.get(obj);
   if (cache !== undefined) {
+    return cache.get(key);
+  }
+}
+
+export function setLastRevisionFor(obj, key, revision) {
+  let lastRevision = COMPUTED_PROPERTY_LAST_REVISION.get(obj);
+  lastRevision.set(key, revision);
+}
+
+export function getLastRevisionFor(obj, key) {
+  let cache = COMPUTED_PROPERTY_LAST_REVISION.get(obj);
+  if (cache == undefined) {
+    return 0;
+  } else {
     return cache.get(key);
   }
 }

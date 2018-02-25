@@ -30,8 +30,8 @@ moduleFor('tracked get validation', class extends AbstractTestCase {
     let snapshot = tag.value();
 
     let full = obj.full;
-    assert.equal(full, 'Tom Dale');
-    assert.equal(tag.validate(snapshot), false);
+    assert.equal(full, 'Tom Dale', 'The full name starts correct');
+    assert.equal(tag.validate(snapshot), true);
 
     snapshot = tag.value();
     assert.equal(tag.validate(snapshot), true);
@@ -67,7 +67,7 @@ moduleFor('tracked get validation', class extends AbstractTestCase {
 
     let full = obj.full;
     assert.equal(full, 'Tom Dale');
-    assert.equal(tag.validate(snapshot), false);
+    assert.equal(tag.validate(snapshot), true);
 
     snapshot = tag.value();
     assert.equal(tag.validate(snapshot), true);
@@ -122,6 +122,65 @@ moduleFor('tracked get validation', class extends AbstractTestCase {
     snapshot = tag.value();
 
     // assert.equal(tag.validate(snapshot), true);
+  }
+
+  ['@test interaction with the Ember object model (paths going through tracked properties)'](assert) {
+    class EmberObject {
+      constructor(contact) {
+        this.contact = contact;
+      }
+    }
+
+    defineProperty(EmberObject.prototype, 'full', computed('contact.name.first', 'contact.name.last', function() {
+      let contact = get(this, 'contact');
+      return `${get(contact.name, 'first')} ${get(contact.name, 'last')}`;
+    }));
+
+    class Contact {
+      constructor(name) {
+        this.name = name;
+      }
+    }
+
+    track(Contact, ['name']);
+
+    class EmberName {
+      constructor(first, last) {
+        this.first = first;
+        this.last = last;
+      }
+    }
+
+    let tom = new EmberName('Tom', 'Dale');
+    let contact = new Contact(tom);
+    let obj = new EmberObject(contact);
+
+    let tag = tagForProperty(obj, 'full');
+    let snapshot = tag.value();
+
+    let full = get(obj, 'full');
+    assert.equal(full, 'Tom Dale');
+    assert.equal(tag.validate(snapshot), true);
+
+    snapshot = tag.value();
+    assert.equal(tag.validate(snapshot), true);
+
+    set(tom, 'first', 'Thomas');
+    assert.equal(tag.validate(snapshot), false, 'invalid after setting with Ember.set');
+
+    assert.equal(get(obj, 'full'), 'Thomas Dale');
+    snapshot = tag.value();
+
+    tom = contact.name = new EmberName('T', 'Dale');
+    assert.equal(tag.validate(snapshot), false, 'invalid after setting with Ember.set');
+
+    assert.equal(get(obj, 'full'), 'T Dale');
+    snapshot = tag.value();
+
+    set(tom, 'first', 'Tizzle');
+    assert.equal(tag.validate(snapshot), false, 'invalid after setting with Ember.set');
+
+    assert.equal(get(obj, 'full'), 'Tizzle Dale');
   }
 });
 
