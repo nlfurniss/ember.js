@@ -10,7 +10,6 @@ moduleFor('Helpers test: {{log}}', class extends RenderingTest {
     this.originalLog = Logger.log;
     this.logCalls = [];
     Logger.log = (...args) => {
-      debugger;
       this.logCalls.push(...args);
     };
   }

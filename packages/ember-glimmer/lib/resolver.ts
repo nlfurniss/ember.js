@@ -181,8 +181,8 @@ export default class RuntimeResolver implements IRuntimeResolver<OwnedTemplateMe
     }
     let template = cache.get(factory);
     if (template === undefined) {
-      debugger;
-      const injections: Injections = { options: this.compiler };
+      const { compiler } = this;
+      const injections: Injections = { compiler };
       setOwner(injections, owner);
       template = factory.create(injections);
       cache.set(factory, template);
