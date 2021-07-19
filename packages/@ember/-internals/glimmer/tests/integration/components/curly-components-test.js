@@ -1301,34 +1301,6 @@ moduleFor(
       this.assertText('somecomponent');
     }
 
-    ['@test non-block with properties on attrs']() {
-      expectDeprecation(
-        "Using {{attrs}} to reference named arguments has been deprecated. {{attrs.someProp}} should be updated to {{@someProp}}. ('my-app/templates/components/non-block.hbs' @ L1:C24) "
-      );
-
-      this.registerComponent('non-block', {
-        template: 'In layout - someProp: {{attrs.someProp}}',
-      });
-
-      this.render('{{non-block someProp=this.prop}}', {
-        prop: 'something here',
-      });
-
-      this.assertText('In layout - someProp: something here');
-
-      runTask(() => this.rerender());
-
-      this.assertText('In layout - someProp: something here');
-
-      runTask(() => this.context.set('prop', 'other thing there'));
-
-      this.assertText('In layout - someProp: other thing there');
-
-      runTask(() => this.context.set('prop', 'something here'));
-
-      this.assertText('In layout - someProp: something here');
-    }
-
     ['@test non-block with named argument']() {
       this.registerComponent('non-block', {
         template: 'In layout - someProp: {{@someProp}}',
@@ -1514,62 +1486,6 @@ moduleFor(
       );
     }
 
-    ['@test this.attrs.foo === attrs.foo === @foo === foo']() {
-      expectDeprecation(
-        "Using {{attrs}} to reference named arguments has been deprecated. {{attrs.value}} should be updated to {{@value}}. ('my-app/templates/components/foo-bar.hbs' @ L1:C8) "
-      );
-
-      expectDeprecation(
-        "Using {{attrs}} to reference named arguments has been deprecated. {{attrs.value}} should be updated to {{@value}}. ('my-app/templates/components/foo-bar.hbs' @ L1:C31) "
-      );
-
-      expectDeprecation(
-        "Using {{attrs}} to reference named arguments has been deprecated. {{attrs.items}} should be updated to {{@items}}. ('my-app/templates/components/foo-bar.hbs' @ L1:C82) "
-      );
-
-      expectDeprecation(
-        "Using {{attrs}} to reference named arguments has been deprecated. {{attrs.items}} should be updated to {{@items}}. ('my-app/templates/components/foo-bar.hbs' @ L1:C135) "
-      );
-
-      this.registerComponent('foo-bar', {
-        template: strip`
-        Args: {{this.attrs.value}} | {{attrs.value}} | {{@value}} | {{this.value}}
-        {{#each this.attrs.items as |item|}}
-          {{item}}
-        {{/each}}
-        {{#each attrs.items as |item|}}
-          {{item}}
-        {{/each}}
-        {{#each @items as |item|}}
-          {{item}}
-        {{/each}}
-        {{#each this.items as |item|}}
-          {{item}}
-        {{/each}}
-      `,
-      });
-
-      this.render('{{foo-bar value=this.model.value items=this.model.items}}', {
-        model: {
-          value: 'wat',
-          items: [1, 2, 3],
-        },
-      });
-
-      this.assertStableRerender();
-
-      runTask(() => {
-        this.context.set('model.value', 'lul');
-        this.context.set('model.items', [1]);
-      });
-
-      this.assertText(strip`Args: lul | lul | lul | lul1111`);
-
-      runTask(() => this.context.set('model', { value: 'wat', items: [1, 2, 3] }));
-
-      this.assertText('Args: wat | wat | wat | wat123123123123');
-    }
-
     ['@test non-block with properties on self']() {
       this.registerComponent('non-block', {
         template: 'In layout - someProp: {{this.someProp}}',
@@ -1597,40 +1513,6 @@ moduleFor(
     ['@test block with properties on self']() {
       this.registerComponent('with-block', {
         template: 'In layout - someProp: {{this.someProp}} - {{yield}}',
-      });
-
-      this.render(
-        strip`
-      {{#with-block someProp=this.prop}}
-        In template
-      {{/with-block}}`,
-        {
-          prop: 'something here',
-        }
-      );
-
-      this.assertText('In layout - someProp: something here - In template');
-
-      runTask(() => this.rerender());
-
-      this.assertText('In layout - someProp: something here - In template');
-
-      runTask(() => this.context.set('prop', 'something else'));
-
-      this.assertText('In layout - someProp: something else - In template');
-
-      runTask(() => this.context.set('prop', 'something here'));
-
-      this.assertText('In layout - someProp: something here - In template');
-    }
-
-    ['@test block with properties on attrs']() {
-      expectDeprecation(
-        "Using {{attrs}} to reference named arguments has been deprecated. {{attrs.someProp}} should be updated to {{@someProp}}. ('my-app/templates/components/with-block.hbs' @ L1:C24) "
-      );
-
-      this.registerComponent('with-block', {
-        template: 'In layout - someProp: {{attrs.someProp}} - {{yield}}',
       });
 
       this.render(
@@ -3515,28 +3397,6 @@ moduleFor(
 
       this.render('{{foo-bar this.wat}}');
       this.assertText('hello');
-    }
-
-    ['@test using attrs for positional params']() {
-      expectDeprecation(
-        "Using {{attrs}} to reference named arguments has been deprecated. {{attrs.myVar}} should be updated to {{@myVar}}. ('my-app/templates/components/foo-bar.hbs' @ L1:C10) "
-      );
-      expectDeprecation(
-        "Using {{attrs}} to reference named arguments has been deprecated. {{attrs.myVar2}} should be updated to {{@myVar2}}. ('my-app/templates/components/foo-bar.hbs' @ L1:C65) "
-      );
-
-      let MyComponent = Component.extend();
-
-      this.registerComponent('foo-bar', {
-        ComponentClass: MyComponent.reopenClass({
-          positionalParams: ['myVar'],
-        }),
-        template: 'MyVar1: {{attrs.myVar}} {{this.myVar}} MyVar2: {{this.myVar2}} {{attrs.myVar2}}',
-      });
-
-      this.render('{{foo-bar 1 myVar2=2}}');
-
-      this.assertText('MyVar1: 1 1 MyVar2: 2 2');
     }
 
     ['@test using named arguments for positional params']() {

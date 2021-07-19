@@ -248,7 +248,7 @@ moduleFor(
           init() {
             this._super(...arguments);
             this.register('template:components/foo-bar', compile(`{{partial "troll"}}`));
-            this.register('template:troll', compile('{{attrs.wat}}'));
+            this.register('template:troll', compile('{{@wat}}'));
             this.register(
               'controller:application',
               Controller.extend({
@@ -271,9 +271,6 @@ moduleFor(
     ['@test attrs in an engine']() {
       expectDeprecation(
         `The use of \`{{partial}}\` is deprecated, please refactor the "troll" partial to a component`
-      );
-      expectDeprecation(
-        'Using {{attrs}} to reference named arguments has been deprecated. {{attrs.wat}} should be updated to {{@wat}}. (L1:C2) '
       );
 
       this.setupEngineWithAttrs([]);

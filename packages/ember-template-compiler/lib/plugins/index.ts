@@ -5,7 +5,6 @@ import AssertReservedNamedArguments from './assert-reserved-named-arguments';
 import AssertSplattributeExpressions from './assert-splattribute-expression';
 import DeprecateSendAction from './deprecate-send-action';
 import TransformActionSyntax from './transform-action-syntax';
-import TransformAttrsIntoArgs from './transform-attrs-into-args';
 import TransformEachInIntoEach from './transform-each-in-into-each';
 import TransformEachTrackArray from './transform-each-track-array';
 import TransformHasBlockSyntax from './transform-has-block-syntax';
@@ -26,7 +25,6 @@ export const RESOLUTION_MODE_TRANSFORMS = Object.freeze(
     TransformQuotedBindingsIntoJustBindings,
     AssertReservedNamedArguments,
     TransformActionSyntax,
-    TransformAttrsIntoArgs,
     TransformEachInIntoEach,
     TransformHasBlockSyntax,
     TransformLinkTo,
